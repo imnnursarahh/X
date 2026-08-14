@@ -23,8 +23,8 @@ export async function getPost(req, res, next) {
 
 // function for creating a post
 export async function createPost(req, res, next) {
-  const { userid, name, text } = req.body;
-  const post = await postRepository.create(userid, name, text);
+  const { text } = req.body;
+  const post = await postRepository.create(text, req.userid);
   res.status(201).json(post);
 }
 
@@ -32,17 +32,30 @@ export async function createPost(req, res, next) {
 export async function updatePost(req, res, next) {
   const id = req.params.id;
   const text = req.body.text;
-  const post = await postRepository.update(id, text);
-  if (post) {
-    res.status(201).json(post);
-  } else {
-    res.status(404).json({ message: `there is no post for ${id}` });
+  const post = await postRepository.getById(id);
+  if (!post) {
+    return res.status(404).json({ message: `no post with this ID ${id}` });
   }
+
+  if (post.userIdx !== req.id) {
+    return res.sendStatus(403);
+  }
+
+  const updated = await postRepository.update(id, text);
+  res.status(200).json(updated);
 }
 
 // function for deleting a post
 export async function deletePost(req, res, next) {
   const id = req.params.id;
+  const post = await postRepository.getById(id);
+  if (!post) {
+    return res.status(404).json({ message: `no post with this ID ${id}` });
+  }
+
+  if (post.userIdx !== req.id) {
+    return res.sendStatus(403);
+  }
   await postRepository.remove(id);
   res.sendStatus(204);
 }

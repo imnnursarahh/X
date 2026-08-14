@@ -11,7 +11,7 @@ async function createJwtToken(id) {
 }
 
 export async function signup(req, res, next) {
-  const { userid, password, name, email } = req.body;
+  const { userid, password, name, email, url } = req.body;
 
   const found = await authRepository.findByUserid(userid);
   if (found) {
@@ -19,11 +19,15 @@ export async function signup(req, res, next) {
   }
 
   const hashed = bcrypt.hashSync(password, config.bcrypt.saltRounds);
-
-  const user = await authRepository.createUser(userid, hashed, name, email);
-  if (user) {
-    res.status(201).json(user);
-  }
+  const user = await authRepository.createUser({
+    userid,
+    password: hashed,
+    name,
+    email,
+    url,
+  });
+  const token = await createJwtToken(user);
+  res.status(201).json({ token, userid });
 }
 
 export async function login(req, res, next) {
@@ -39,9 +43,13 @@ export async function login(req, res, next) {
   }
 
   const token = await createJwtToken(user.id);
-  res.status(200).json({ token, user });
+  res.status(200).json({ token, userid });
 }
 
 export async function me(req, res, next) {
-  res.status(200).json({ message: "success!" });
+  const user = await authRepository.findById(req.userid);
+  if (!user) {
+    return res.status(404).json({ message: "no matching user found" });
+  }
+  res.status(200).json({ token: req.token, userid: user.userid });
 }
