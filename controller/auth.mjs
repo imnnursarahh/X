@@ -2,13 +2,12 @@ import express from "express";
 import * as authRepository from "../data/auth.mjs";
 import * as bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
-const secretKey = "abcdefg1234%^&*";
-const bcryptSaltRounds = 10;
-const jwtExpiresInDays = "2d";
+import { config } from "../config.mjs";
 
 async function createJwtToken(id) {
-  return jwt.sign({ id }, secretKey, { expiresIn: jwtExpiresInDays });
+  return jwt.sign({ id }, config.jwt.secretkey, {
+    expiresIn: config.jwt.expiresInSec,
+  });
 }
 
 export async function signup(req, res, next) {
@@ -19,7 +18,7 @@ export async function signup(req, res, next) {
     return res.status(409).json({ message: `${userid} already exists` });
   }
 
-  const hashed = bcrypt.hashSync(password, bcryptSaltRounds);
+  const hashed = bcrypt.hashSync(password, config.bcrypt.saltRounds);
 
   const user = await authRepository.createUser(userid, hashed, name, email);
   if (user) {
@@ -41,4 +40,8 @@ export async function login(req, res, next) {
 
   const token = await createJwtToken(user.id);
   res.status(200).json({ token, user });
+}
+
+export async function me(req, res, next) {
+  res.status(200).json({ message: "success!" });
 }
