@@ -1,7 +1,17 @@
 import express from "express";
 import * as postController from "../controller/post.mjs";
+import { body } from "express-validator";
+import { validate } from "../middleware/validator.mjs";
 
 const router = express.Router();
+
+const validatePost = [
+  body("text")
+    .trim()
+    .isLength({ min: 4 })
+    .withMessage("input at least 4 characters"),
+  validate,
+];
 
 // create a complete post retrieval simultaneously
 // get posts for the corresponding id
@@ -12,13 +22,13 @@ router.get("/", postController.getPosts);
 // get post number
 // GET
 // http://127.0.0.1:8080/post/:id
-router.get("/:id", postController.getPost);
+router.get("/:id", validatePost, postController.getPost);
 
 // write post
 // POST
 // http://127.0.0.1:8080/post
 // after inputting in json format, we can output all the added data as json
-router.post("/", postController.createPost);
+router.post("/", validatePost, postController.createPost);
 
 // post head
 // PUT
