@@ -4,6 +4,8 @@ import authRouter from "./router/auth.mjs";
 
 const app = express();
 
+app.use(express.json());
+
 app.use("/post", postsRouter);
 app.use("/auth", authRouter);
 
